@@ -1,0 +1,16 @@
+run,attack_type,pipeline,pipeline_label,start_time,end_time,triage_time_s,action_quality_5,context_quality_5,analyst_steps,notes
+1,Brute Force,C,AI Full,01:08:03,01:08:18,39,4,4,4,Auto-summary; IRIS case created
+2,Brute Force,C,AI Full,01:32:00,01:32:47,47,5,5,4,Malicious IP confirmed HIGH via AbuseIPDB
+3,File Hash,C,AI Full,02:20:00,02:20:15,41,4,4,3,Legit hash (splunk-admon.exe); LOW severity; monitoring only
+4,File Hash,C,AI Full,02:39:00,02:39:40,40,5,5,4,DarkComet 67/72 VT vendors; CRITICAL; isolation guidance
+5,PowerShell,C,AI Full,22:45:19,22:45:53,34,5,4,4,HIGH; payload download+exec bypass; full pipeline 34s
+6,Network Scanning,C,AI Full,23:37:30,23:37:40,35.2,4,4,4,Ports 135/139/445; AbuseIPDB enrichment; Slack+IRIS auto
+7,Admin Privilege Escalation,C,AI Full,23:50:45,23:50:52,30.6,5,4,4,CRITICAL; priv esc + persistence detected; Slack+IRIS
+8,Admin Privilege Escalation,A,Manual,23:50:06,23:52:56,170,3,3,6,Manual Splunk review; correct classification but slow
+9,PowerShell,A,Manual,22:45:10,22:48:15,185,3,3,6,Manual flag review (-enc / IEX); correct but time-intensive
+10,Network Scanning,A,Manual,23:37:15,23:41:35,260,3,4,7,Manual firewall log review + AbuseIPDB lookup; highest manual time
+11,File Hash,A,Manual,22:01:06,22:04:46,220,3,4,7,Manual SHA256 lookup via VirusTotal; 7 steps required
+12,Brute Force,A,Manual,21:29:36,21:33:06,210,3,4,7,Manual login review + AbuseIPDB; 210s
+13,Network Scanning,B,AI No Tools,22:27:03,22:28:53,110,4,3,3,LLM summary only; no IP reputation validation
+14,File Hash,B,AI No Tools,22:42:19,22:44:19,120,4,3,3,LLM context only; no hash reputation check via VirusTotal
+15,Brute Force,B,AI No Tools,22:34:44,22:37:24,160,4,3,3,LLM brute-force identification; no IP reputation validation
