@@ -167,7 +167,7 @@ This pipeline uses commercial tools. If you want to replicate it without cost, h
 lara-soc-automation/
 ├── README.md
 ├── LICENSE
-├── .env.example                    ← API key template
+├── env.example                    ← API key template
 ├── workflows/
 │   ├── pipeline-b-llm-only.json   ← n8n workflow export (LLM-only)
 │   └── pipeline-c-integrated.json ← n8n workflow export (fully integrated)
