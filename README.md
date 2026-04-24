@@ -230,5 +230,5 @@ This project was built for academic research and educational purposes in a fully
 
 ## Connect
 
-**LinkedIn:** [Add your LinkedIn URL]  
+**LinkedIn:** [Christopher Andrews](https://www.linkedin.com/in/christopher-andrews-958b30248/) 
 **Dissertation:** Available on request
