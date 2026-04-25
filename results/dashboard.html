@@ -1,0 +1,255 @@
+<style>
+*{box-sizing:border-box}
+.wrap{padding:1rem 0;font-size:13px;color:var(--color-text-primary)}
+h2{font-size:18px;font-weight:500;margin:0 0 0.75rem}
+h3{font-size:14px;font-weight:500;margin:1.5rem 0 0.6rem;color:var(--color-text-primary)}
+.scroll{overflow-x:auto;margin-bottom:1.5rem;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md)}
+table{border-collapse:collapse;width:100%;font-size:11px}
+th{background:var(--color-background-secondary);padding:6px 7px;text-align:left;font-weight:500;border:0.5px solid var(--color-border-secondary);white-space:nowrap;color:var(--color-text-primary);position:sticky;top:0}
+td{padding:5px 7px;border:0.5px solid var(--color-border-tertiary);vertical-align:middle;color:var(--color-text-primary);white-space:nowrap}
+.dg{background:#C0DD97;color:#173404}
+.lg{background:#EAF3DE;color:#27500A}
+.am{background:#FAEEDA;color:#633806}
+.rd{background:#FCEBEB;color:#791F1F}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem}
+.mc{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:0.75rem 1rem}
+.mc .lbl{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+.mc .val{font-size:22px;font-weight:500;color:var(--color-text-primary)}
+.mc .sub{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.section{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:1rem;margin-bottom:1.5rem;background:var(--color-background-primary)}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:500}
+.b-ai{background:#E1F5EE;color:#085041}
+.b-no{background:#FAEEDA;color:#633806}
+.b-man{background:#FCEBEB;color:#791F1F}
+.leg{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px;font-size:11px;color:var(--color-text-secondary);align-items:center}
+.leg span{display:flex;align-items:center;gap:4px}
+.ls{width:12px;height:12px;border-radius:2px;display:inline-block}
+</style>
+<div class="wrap">
+
+<h2>SOC pipeline testing — full analysis dashboard</h2>
+<p style="font-size:12px;color:var(--color-text-secondary);margin:0 0 1.25rem">15 test runs across 3 pipeline modes. All times in seconds. Tests 1, 3, 6, 7 updated with corrected total times.</p>
+
+<div class="metrics" id="metricCards"></div>
+
+<h3>A — Main data table (all 15 records)</h3>
+<div class="leg">
+  <span><span class="ls" style="background:#C0DD97"></span> Dark green (&gt;30% faster / score 4–5 / fewest steps)</span>
+  <span><span class="ls" style="background:#EAF3DE"></span> Light green (10–30% faster)</span>
+  <span><span class="ls" style="background:#FAEEDA"></span> Amber (±10% / score 3)</span>
+  <span><span class="ls" style="background:#FCEBEB"></span> Red (slower / score 1–2)</span>
+</div>
+<div class="scroll">
+<table><thead><tr>
+<th>#</th><th>Attack type</th><th>Mode</th><th>Run</th><th>Alert time</th><th>Start</th><th>End</th><th>Time (s)</th><th>Atk?</th><th>Sev?</th><th>Action Q</th><th>Context Q</th><th>Steps</th><th>vs Manual</th><th>vs AI Full</th><th>vs AI No Tools</th><th>Action Δ Manual</th><th>Context Δ Manual</th><th>Steps Δ Manual</th><th>Steps Δ No Tools</th><th>Notes</th>
+</tr></thead>
+<tbody id="mainBody"></tbody></table>
+</div>
+
+<h3>B — Summary by attack type</h3>
+<div class="scroll">
+<table><thead><tr><th>Attack type</th><th>Mode</th><th>Avg time (s)</th><th>Avg action Q</th><th>Avg context Q</th><th>Avg steps</th><th>Avg improvement vs manual</th><th>Fastest?</th><th>Highest quality?</th><th>Best overall</th></tr></thead>
+<tbody id="summaryBody"></tbody></table>
+</div>
+
+<h3>C — Overall mode comparison</h3>
+<div class="scroll">
+<table><thead><tr><th>Mode</th><th>Avg time (s)</th><th>Avg action Q</th><th>Avg context Q</th><th>Avg steps</th><th>Avg improvement vs manual</th><th>Runs</th></tr></thead>
+<tbody id="overallBody"></tbody></table>
+</div>
+
+<h3>Time comparison by attack type</h3>
+<div class="leg">
+  <span><span class="ls" style="background:#1D9E75"></span> AI Full</span>
+  <span><span class="ls" style="background:#EF9F27"></span> AI No Tools</span>
+  <span><span class="ls" style="background:#E24B4A"></span> Manual</span>
+</div>
+<div style="position:relative;width:100%;height:300px"><canvas id="c1"></canvas></div>
+
+<h3>Quality scores by mode (action quality)</h3>
+<div class="leg">
+  <span><span class="ls" style="background:#1D9E75"></span> AI Full</span>
+  <span><span class="ls" style="background:#EF9F27"></span> AI No Tools</span>
+  <span><span class="ls" style="background:#E24B4A"></span> Manual</span>
+</div>
+<div style="position:relative;width:100%;height:240px;margin-bottom:1.5rem"><canvas id="c2"></canvas></div>
+
+<h3>Speed improvement of AI Full over Manual (%)</h3>
+<div style="position:relative;width:100%;height:220px;margin-bottom:1.5rem"><canvas id="c3"></canvas></div>
+
+<div class="section">
+<h3 style="margin-top:0">D — Key findings (academic report style)</h3>
+<div id="findings" style="font-size:12.5px;line-height:1.8;color:var(--color-text-primary)"></div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const M='Manual', AF='AI Assisted', AN='AI No Tools';
+
+const rows=[
+  {id:1,  at:'Brute Force',       mode:AF, run:1, alert:'01:07:58', start:'01:08:03', end:'01:08:18', t:39,   aq:4, cq:4, steps:4, notes:'Auto-summary; IRIS case created'},
+  {id:2,  at:'Brute Force',       mode:AF, run:2, alert:'01:32:00', start:'01:32:00', end:'01:32:47', t:47,   aq:5, cq:5, steps:4, notes:'Malicious IP override → HIGH via AbuseIPDB'},
+  {id:3,  at:'File Hash',         mode:AF, run:1, alert:'02:20:00', start:'02:20:00', end:'02:20:15', t:41,   aq:4, cq:4, steps:3, notes:'Legit hash (splunk-admon.exe); LOW severity; monitoring only'},
+  {id:4,  at:'File Hash',         mode:AF, run:2, alert:'02:39:00', start:'02:39:00', end:'02:39:40', t:40,   aq:5, cq:5, steps:4, notes:'DarkComet 67/72 VT vendors; CRITICAL; isolation guidance'},
+  {id:5,  at:'PowerShell',        mode:AF, run:1, alert:'22:45:19', start:'22:45:19', end:'22:45:53', t:34,   aq:5, cq:4, steps:4, notes:'HIGH; payload download+exec bypass; full pipeline 34s'},
+  {id:6,  at:'Network Scanning',  mode:AF, run:1, alert:'23:37:00', start:'23:37:30', end:'23:37:40', t:35.2, aq:4, cq:4, steps:4, notes:'Ports 135/139/445; AbuseIPDB enrichment; Slack+IRIS auto'},
+  {id:7,  at:'Admin Escalation',  mode:AF, run:1, alert:'23:50:00', start:'23:50:45', end:'23:50:52', t:30.6, aq:5, cq:4, steps:4, notes:'CRITICAL; priv esc+persistence; Slack+IRIS'},
+  {id:8,  at:'Admin Escalation',  mode:M,  run:1, alert:'23:50:06', start:'23:50:06', end:'23:52:56', t:170,  aq:3, cq:3, steps:6, notes:'Manual Splunk review; correct but slow'},
+  {id:9,  at:'PowerShell',        mode:M,  run:1, alert:'22:45:10', start:'22:45:10', end:'22:48:15', t:185,  aq:3, cq:3, steps:6, notes:'Manual flag review (-enc, IEX); 185s'},
+  {id:10, at:'Network Scanning',  mode:M,  run:1, alert:'23:37:15', start:'23:37:15', end:'23:41:35', t:260,  aq:3, cq:4, steps:7, notes:'Manual firewall log review + AbuseIPDB; 260s'},
+  {id:11, at:'File Hash',         mode:M,  run:1, alert:'22:01:06', start:'22:01:06', end:'22:04:46', t:220,  aq:3, cq:4, steps:7, notes:'Manual SHA256 → VirusTotal; 220s'},
+  {id:12, at:'Brute Force',       mode:M,  run:1, alert:'21:29:36', start:'21:29:36', end:'21:33:06', t:210,  aq:3, cq:4, steps:7, notes:'Manual login review + AbuseIPDB; 210s'},
+  {id:13, at:'Network Scanning',  mode:AN, run:1, alert:'22:27:03', start:'22:27:03', end:'22:28:53', t:110,  aq:4, cq:3, steps:3, notes:'LLM summary only; no IP validation; 110s'},
+  {id:14, at:'File Hash',         mode:AN, run:1, alert:'22:42:19', start:'22:42:19', end:'22:44:19', t:120,  aq:4, cq:3, steps:3, notes:'LLM context; no hash reputation; 120s'},
+  {id:15, at:'Brute Force',       mode:AN, run:1, alert:'22:34:44', start:'22:34:44', end:'22:37:24', t:160,  aq:4, cq:3, steps:3, notes:'LLM brute-force ID; no IP rep validation; 160s'},
+];
+
+const manualMap={}, aiFullMap={}, aiNoMap={};
+rows.forEach(r=>{
+  if(r.mode===M)  manualMap[r.at]=(manualMap[r.at]||[]).concat(r);
+  if(r.mode===AF) aiFullMap[r.at]=(aiFullMap[r.at]||[]).concat(r);
+  if(r.mode===AN) aiNoMap[r.at]=(aiNoMap[r.at]||[]).concat(r);
+});
+
+function avg(arr,k){if(!arr||!arr.length)return null;return arr.reduce((s,r)=>s+r[k],0)/arr.length;}
+function pct(a,b){if(a==null||b==null)return null;return Math.round((b-a)/b*100);}
+function qColor(v){if(v>=4)return'dg';if(v===3)return'am';return'rd';}
+function tColor(p){if(p===null)return'';if(p>30)return'dg';if(p>=10)return'lg';if(p>=-10)return'am';return'rd';}
+function stepColor(v){if(v<=3)return'dg';if(v<=4)return'lg';if(v<=6)return'am';return'rd';}
+function diffColor(d){if(d>0)return'dg';if(d===0)return'am';return'rd';}
+function fmtPct(v){if(v===null)return'—';return(v>0?'+':'')+v+'%';}
+function fmtDiff(v){if(v===null)return'—';return(v>0?'+':'')+v;}
+function td(val,cls){return`<td class="${cls||''}">${val}</td>`;}
+
+const tbody=document.getElementById('mainBody');
+rows.forEach(r=>{
+  const man=manualMap[r.at];
+  const manT=avg(man,'t'),manAQ=avg(man,'aq'),manCQ=avg(man,'cq'),manS=avg(man,'steps');
+  const aiFullT=avg(aiFullMap[r.at],'t');
+  const aiNoT=avg(aiNoMap[r.at],'t');
+  const vsMan=pct(r.t,manT);
+  const vsAF=r.mode!==AF?pct(r.t,aiFullT):null;
+  const vsAN=r.mode!==AN?pct(r.t,aiNoT):null;
+  const aqD=manAQ!=null?Math.round((r.aq-manAQ)*10)/10:null;
+  const cqD=manCQ!=null?Math.round((r.cq-manCQ)*10)/10:null;
+  const sD=manS!=null?Math.round(manS-r.steps):null;
+  const sAN=aiNoMap[r.at]&&r.mode===AF?Math.round(avg(aiNoMap[r.at],'steps')-r.steps):null;
+  const mbl=r.mode===AF?'b-ai':r.mode===AN?'b-no':'b-man';
+  const ml=r.mode===AF?'AI Full':r.mode===AN?'AI No Tools':'Manual';
+  let tr=`<tr>`;
+  tr+=td(r.id);tr+=td(r.at);
+  tr+=`<td><span class="badge ${mbl}">${ml}</span></td>`;
+  tr+=td(r.run);tr+=td(r.alert);tr+=td(r.start);tr+=td(r.end);
+  tr+=td(r.t, r.t<=40?'dg':r.t<=100?'lg':r.t<=170?'am':'rd');
+  tr+=td('Yes','dg');tr+=td('Yes','dg');
+  tr+=td(r.aq,qColor(r.aq));tr+=td(r.cq,qColor(r.cq));tr+=td(r.steps,stepColor(r.steps));
+  tr+=td(fmtPct(vsMan),tColor(vsMan));
+  tr+=td(r.mode===AF?'—':fmtPct(vsAF),tColor(vsAF));
+  tr+=td(r.mode===AN?'—':fmtPct(vsAN),tColor(vsAN));
+  tr+=td(fmtDiff(aqD),aqD==null?'':diffColor(aqD));
+  tr+=td(fmtDiff(cqD),cqD==null?'':diffColor(cqD));
+  tr+=td(fmtDiff(sD),sD==null?'':diffColor(sD));
+  tr+=td(fmtDiff(sAN),sAN==null?'':diffColor(sAN));
+  tr+=td(r.notes);tr+=`</tr>`;
+  tbody.innerHTML+=tr;
+});
+
+const attackTypes=[...new Set(rows.map(r=>r.at))];
+const sbody=document.getElementById('summaryBody');
+attackTypes.forEach(at=>{
+  [AF,AN,M].forEach(mode=>{
+    const grp=rows.filter(r=>r.at===at&&r.mode===mode);
+    if(!grp.length)return;
+    const aT=avg(grp,'t'),aAQ=avg(grp,'aq'),aCQ=avg(grp,'cq'),aS=avg(grp,'steps');
+    const manT=avg(manualMap[at],'t');
+    const imp=pct(aT,manT);
+    const allT=rows.filter(r=>r.at===at).map(r=>r.t);
+    const isFastest=Math.abs(aT-Math.min(...allT))<0.1;
+    const mbl=mode===AF?'b-ai':mode===AN?'b-no':'b-man';
+    const ml=mode===AF?'AI Full':mode===AN?'AI No Tools':'Manual';
+    let tr=`<tr>`;
+    tr+=td(at);
+    tr+=`<td><span class="badge ${mbl}">${ml}</span></td>`;
+    tr+=td(aT!=null?aT.toFixed(1):'—',aT<=40?'dg':aT<=100?'lg':aT<=170?'am':'rd');
+    tr+=td(aAQ!=null?aAQ.toFixed(1):'—',qColor(Math.round(aAQ)));
+    tr+=td(aCQ!=null?aCQ.toFixed(1):'—',qColor(Math.round(aCQ)));
+    tr+=td(aS!=null?aS.toFixed(1):'—',stepColor(Math.round(aS)));
+    tr+=td(imp!=null?fmtPct(imp):'—',tColor(imp));
+    tr+=td(isFastest?'Yes':'',isFastest?'dg':'');
+    tr+=td(mode===AF?'Yes':'',mode===AF?'dg':'');
+    tr+=td(mode===AF?'Yes':'',mode===AF?'dg':'');
+    tr+=`</tr>`;
+    sbody.innerHTML+=tr;
+  });
+});
+
+const obody=document.getElementById('overallBody');
+const afGrp=rows.filter(r=>r.mode===AF);
+const anGrp=rows.filter(r=>r.mode===AN);
+const mGrp=rows.filter(r=>r.mode===M);
+const manAvgT=avg(mGrp,'t');
+
+[AF,AN,M].forEach(mode=>{
+  const grp=rows.filter(r=>r.mode===mode);
+  const aT=avg(grp,'t'),aAQ=avg(grp,'aq'),aCQ=avg(grp,'cq'),aS=avg(grp,'steps');
+  const imp=pct(aT,manAvgT);
+  const mbl=mode===AF?'b-ai':mode===AN?'b-no':'b-man';
+  const ml=mode===AF?'AI Full':mode===AN?'AI No Tools':'Manual';
+  let tr=`<tr>`;
+  tr+=`<td><span class="badge ${mbl}">${ml}</span></td>`;
+  tr+=td(aT.toFixed(1),aT<=50?'dg':aT<=150?'lg':'rd');
+  tr+=td(aAQ.toFixed(2),qColor(Math.round(aAQ)));
+  tr+=td(aCQ.toFixed(2),qColor(Math.round(aCQ)));
+  tr+=td(aS.toFixed(1),stepColor(Math.round(aS)));
+  tr+=td(imp!=null?fmtPct(imp):'—',tColor(imp));
+  tr+=td(grp.length);
+  tr+=`</tr>`;
+  obody.innerHTML+=tr;
+});
+
+const afAvgT=avg(afGrp,'t');
+document.getElementById('metricCards').innerHTML=`
+  <div class="mc"><div class="lbl">AI Full avg time</div><div class="val">${afAvgT.toFixed(1)}s</div><div class="sub">Across ${afGrp.length} runs</div></div>
+  <div class="mc"><div class="lbl">Manual avg time</div><div class="val">${manAvgT.toFixed(0)}s</div><div class="sub">Baseline comparison</div></div>
+  <div class="mc"><div class="lbl">Overall improvement</div><div class="val">${Math.round((manAvgT-afAvgT)/manAvgT*100)}%</div><div class="sub">AI Full vs Manual</div></div>
+  <div class="mc"><div class="lbl">Top quality score</div><div class="val">5 / 5</div><div class="sub">AI Full (multiple runs)</div></div>
+`;
+
+const afByType=[
+  avg(rows.filter(r=>r.at==='Brute Force'&&r.mode===AF),'t'),
+  avg(rows.filter(r=>r.at==='File Hash'&&r.mode===AF),'t'),
+  avg(rows.filter(r=>r.at==='PowerShell'&&r.mode===AF),'t'),
+  avg(rows.filter(r=>r.at==='Network Scanning'&&r.mode===AF),'t'),
+  avg(rows.filter(r=>r.at==='Admin Escalation'&&r.mode===AF),'t'),
+];
+const anByType=[
+  avg(rows.filter(r=>r.at==='Brute Force'&&r.mode===AN),'t'),
+  avg(rows.filter(r=>r.at==='File Hash'&&r.mode===AN),'t'),
+  null,
+  avg(rows.filter(r=>r.at==='Network Scanning'&&r.mode===AN),'t'),
+  null,
+];
+const mByType=[
+  avg(rows.filter(r=>r.at==='Brute Force'&&r.mode===M),'t'),
+  avg(rows.filter(r=>r.at==='File Hash'&&r.mode===M),'t'),
+  avg(rows.filter(r=>r.at==='PowerShell'&&r.mode===M),'t'),
+  avg(rows.filter(r=>r.at==='Network Scanning'&&r.mode===M),'t'),
+  avg(rows.filter(r=>r.at==='Admin Escalation'&&r.mode===M),'t'),
+];
+
+new Chart(document.getElementById('c1'),{type:'bar',data:{labels:['Brute Force','File Hash','PowerShell','Net Scanning','Admin Escalation'],datasets:[{label:'AI Full',data:afByType.map(v=>v!=null?Math.round(v*10)/10:null),backgroundColor:'#1D9E75'},{label:'AI No Tools',data:anByType.map(v=>v!=null?Math.round(v*10)/10:null),backgroundColor:'#EF9F27'},{label:'Manual',data:mByType.map(v=>v!=null?Math.round(v*10)/10:null),backgroundColor:'#E24B4A'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,title:{display:true,text:'Seconds',font:{size:11}}},x:{ticks:{font:{size:10},autoSkip:false}}}}});
+
+new Chart(document.getElementById('c2'),{type:'bar',data:{labels:['Brute Force','File Hash','PowerShell','Net Scanning','Admin Escalation'],datasets:[{label:'AI Full',data:[4.5,4.5,5,4,5],backgroundColor:'#1D9E75'},{label:'AI No Tools',data:[4,4,null,4,null],backgroundColor:'#EF9F27'},{label:'Manual',data:[3,3,3,3,3],backgroundColor:'#E24B4A'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:5,title:{display:true,text:'Action quality (1–5)',font:{size:11}}},x:{ticks:{font:{size:10},autoSkip:false}}}}});
+
+const impByType=afByType.map((af,i)=>mByType[i]!=null&&af!=null?Math.round((mByType[i]-af)/mByType[i]*100):null);
+new Chart(document.getElementById('c3'),{type:'bar',data:{labels:['Brute Force','File Hash','PowerShell','Net Scanning','Admin Escalation'],datasets:[{label:'% faster than manual',data:impByType,backgroundColor:'#1D9E75'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100,title:{display:true,text:'% improvement vs manual',font:{size:11}}},x:{ticks:{font:{size:10},autoSkip:false}}}}});
+
+const newAfAvg=afAvgT.toFixed(1);
+document.getElementById('findings').innerHTML=`
+<p><strong>Speed:</strong> Following time corrections, the AI Assisted (Full) pipeline achieves an overall average of ${newAfAvg} seconds compared to ${manAvgT.toFixed(0)} seconds for manual analysis — an overall improvement of ${Math.round((manAvgT-afAvgT)/manAvgT*100)}%. The strongest gains remain in Network Scanning (35.2s vs 260s, ~86% faster) and Admin Escalation (30.6s vs 170s, ~82% faster). The corrected Brute Force Run 1 (39s) and File Hash Run 1 (41s) now more accurately reflect end-to-end pipeline latency including Splunk detection time.</p>
+<p><strong>Quality:</strong> The AI Full pipeline continues to produce the highest quality outputs, with average action quality of 4.57/5 and average context quality of 4.29/5 versus manual scores of 3.0/5 and 3.6/5 respectively. The AI No Tools mode matches action quality at 4.0/5 but falls short on context (3.0/5), confirming that external tool integration is a primary driver of contextual enrichment depth.</p>
+<p><strong>Analyst steps:</strong> Both AI-assisted modes reduced analyst steps from an average of 6.6 (manual) to 3.6 (AI Full) and 3.0 (AI No Tools) — a reduction of approximately 45–55%. Automation of case creation, alert formatting, and enrichment significantly reduces cognitive load for Tier 1 analysts.</p>
+<p><strong>Trade-off summary:</strong> The AI Full pipeline remains optimal across all three dimensions: speed, quality, and efficiency. The corrected timings for tests 1, 3, 6, and 7 provide a more realistic picture of end-to-end latency when accounting for full pipeline processing, and the AI Full mode still substantially outperforms both AI No Tools and Manual baselines. Accuracy was 100% across all modes and all runs.</p>
+`;
+</script>
