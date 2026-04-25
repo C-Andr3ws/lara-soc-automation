@@ -76,6 +76,8 @@ Standard Tier 1 SOC analyst workflow with no automation. The analyst manually qu
 ### Pipeline B — LLM-Only
 Splunk alert is forwarded via webhook to n8n, which passes the structured alert to GPT-4.1 Mini for classification, severity assessment, and response recommendations. No external threat intelligence APIs are called. Isolates the contribution of LLM reasoning alone.
 
+> Pipeline B was not a separate workflow — it was achieved by disabling the AbuseIPDB, VirusTotal, and VirusTotal-FileHash tool nodes in the same n8n workflow used for Pipeline C.
+
 ### Pipeline C — Fully Integrated (Primary)
 Complete pipeline. LLM analysis is supplemented by real-time threat intelligence enrichment via AbuseIPDB (IP reputation) and VirusTotal (file hash and IP detection). Results are used to auto-create a case in DFIR-IRIS and deliver a formatted Slack notification for high-severity alerts.
 
@@ -89,8 +91,8 @@ Five simulated attack scenarios mapped to MITRE ATT&CK techniques:
 |---|---|---|
 | Brute Force Authentication | T1110 | Windows Event ID 4625 |
 | Malicious File Execution / Hash | T1059 / T1204 | Sysmon Event ID 1 |
-| Suspicious IP / Network Scanning | T1071 | Network logs + AbuseIPDB |
-| Privilege Escalation | T1068 | Windows Event ID 4720 / 4672 |
+| Suspicious IP / Network Scanning | T1046 | Windows Firewall logs |
+| Privilege Escalation / Admin Account | T1136 / T1078 | Windows Event ID 4720 / 4732 |
 | PowerShell-Based Attack | T1059.001 | Sysmon command-line telemetry |
 
 All scenarios were pre-verified to ensure correct detection before formal timing tests began. The 100% classification accuracy result reflects performance under controlled conditions against known, tested scenarios — not a claim of generalised real-world reliability.
@@ -167,23 +169,24 @@ This pipeline uses commercial tools. If you want to replicate it without cost, h
 lara-soc-automation/
 ├── README.md
 ├── LICENSE
-├── env.example                    ← API key template
+├── env.example                         ← API key template
 ├── workflows/
-│   ├── pipeline-b-llm-only.json   ← n8n workflow export (LLM-only)
-│   └── pipeline-c-integrated.json ← n8n workflow export (fully integrated)
+│   └── pipeline-c-integrated.json     ← n8n workflow export (fully integrated)
+│                                          Pipeline B = disable AbuseIPDB + VirusTotal nodes
+│                                          Pipeline A = manual baseline, no automation
 ├── splunk/
-│   └── detection-rules.md         ← SPL queries for all 5 detection scenarios
-├── diagrams/
-│   ├── architecture-overview.png
-│   ├── data-flow.png
-│   └── network-topology.png
+│   └── detection-rules.md             ← All 5 SPL queries with explanation
 ├── results/
-│   └── evaluation-results.csv     ← All 15 test runs raw data
+│   └── evaluation-results.csv         ← All 15 test runs raw data
 ├── screenshots/
-│   └── (pipeline screenshots)
+│   ├── workflow-canvas.png             ← n8n workflow overview
+│   ├── splunk-alerts.png               ← Splunk saved alerts list
+│   ├── dfir-iris-case.png              ← Auto-created DFIR-IRIS case
+│   └── slack-notification.png         ← Slack alert output
 └── docs/
-    ├── attack-scenarios.md         ← MITRE-mapped scenario descriptions
-    └── lab-environment.md          ← Full VM setup and network config
+    ├── attack-scenarios.md             ← MITRE-mapped scenario descriptions
+    ├── lab-environment.md              ← Full VM setup and network config
+    └── prompts-and-code.md            ← Full system prompt, user prompt, and JavaScript
 ```
 
 ---
@@ -197,7 +200,7 @@ lara-soc-automation/
 - Ubuntu 24.04 ISOs × 3, Windows 10 Pro ISO × 1, Kali Linux ISO × 1
 - Splunk Enterprise (trial or developer licence)
 - Docker + Docker Compose (for n8n and DFIR-IRIS)
-- API keys — see `.env.example`
+- API keys — see `env.example`
 
 **Required API keys:**
 - OpenAI API key (GPT-4.1 Mini) — or substitute a local Ollama model
@@ -210,7 +213,7 @@ lara-soc-automation/
 
 ## Tech Stack
 
-`Splunk` `n8n` `GPT-4.1 Mini` `AbuseIPDB` `VirusTotal` `DFIR-IRIS` `Slack` `VMware` `Docker` `Ubuntu 24.04` `Windows 10` `Kali Linux` `Sysmon` `Python (JavaScript in n8n)`
+`Splunk` `n8n` `GPT-4.1 Mini` `AbuseIPDB` `VirusTotal` `DFIR-IRIS` `Slack` `VMware` `Docker` `Ubuntu 24.04` `Windows 10` `Kali Linux` `Sysmon` `JavaScript`
 
 ---
 
@@ -230,5 +233,4 @@ This project was built for academic research and educational purposes in a fully
 
 ## Connect
 
-**LinkedIn:** [Christopher Andrews](https://www.linkedin.com/in/christopher-andrews-958b30248/) 
-**Dissertation:** Available on request
+**LinkedIn:** [Christopher Andrews](https://www.linkedin.com/in/christopher-andrews-958b30248/)  
