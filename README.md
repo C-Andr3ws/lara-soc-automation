@@ -19,14 +19,17 @@ Most SOC automation lab projects demonstrate that a pipeline *works*. This proje
 
 Three pipeline configurations were tested against five simulated attack scenarios across 15 controlled runs:
 
-| Metric | Manual Baseline | LLM-Only | Fully Integrated |
-|---|---|---|---|
-| **Avg. Triage Time** | 209s | 130s | 38.1s |
-| **Time Reduction** | — | ↓ 38% | ↓ 82% |
-| **Action Quality** | 3.0 / 5 | 4.0 / 5 | 4.57 / 5 |
-| **Context Quality** | 3.6 / 5 | 3.0 / 5 | 4.29 / 5 |
-| **Analyst Steps** | 6.6 avg | 3.0 avg | 3.6 avg |
-| **Classification Accuracy** | 100% | 100% | 100% |
+<table width="100%">
+<thead><tr><th>Metric</th><th>Manual Baseline</th><th>LLM-Only</th><th>Fully Integrated</th></tr></thead>
+<tbody>
+<tr><td><strong>Avg. Triage Time</strong></td><td>209s</td><td>130s</td><td>38.1s</td></tr>
+<tr><td><strong>Time Reduction</strong></td><td>—</td><td>↓ 38%</td><td>↓ 82%</td></tr>
+<tr><td><strong>Action Quality</strong></td><td>3.0 / 5</td><td>4.0 / 5</td><td>4.57 / 5</td></tr>
+<tr><td><strong>Context Quality</strong></td><td>3.6 / 5</td><td>3.0 / 5</td><td>4.29 / 5</td></tr>
+<tr><td><strong>Analyst Steps</strong></td><td>6.6 avg</td><td>3.0 avg</td><td>3.6 avg</td></tr>
+<tr><td><strong>Classification Accuracy</strong></td><td>100%</td><td>100%</td><td>100%</td></tr>
+</tbody>
+</table>
 
 ![Pipeline Comparison Radar](screenshots/pipeline-comparison-radar.png)
 
@@ -56,13 +59,16 @@ The central finding: **orchestration depth, not model capability alone, drives p
 
 Deployed across **5 Virtual Machines** in VMware Workstation Pro on an isolated internal network (`192.168.106.0/24`):
 
-| VM | OS | Role | IP |
-|---|---|---|---|
-| Windows Client | Windows 10 Pro | Endpoint telemetry source | 192.168.106.128 |
-| Splunk Server | Ubuntu 24.04 | SIEM platform | 192.168.106.129 |
-| n8n Server | Ubuntu 24.04 | SOAR & LLM orchestration | 192.168.106.130 |
-| DFIR-IRIS Server | Ubuntu 24.04 | Case management | 192.168.106.131 |
-| Kali Linux | Kali Linux | Attack simulation | 192.168.106.133 |
+<table width="100%">
+<thead><tr><th>VM</th><th>OS</th><th>Role</th><th>IP</th></tr></thead>
+<tbody>
+<tr><td>Windows Client</td><td>Windows 10 Pro</td><td>Endpoint telemetry source</td><td>192.168.106.128</td></tr>
+<tr><td>Splunk Server</td><td>Ubuntu 24.04</td><td>SIEM platform</td><td>192.168.106.129</td></tr>
+<tr><td>n8n Server</td><td>Ubuntu 24.04</td><td>SOAR & LLM orchestration</td><td>192.168.106.130</td></tr>
+<tr><td>DFIR-IRIS Server</td><td>Ubuntu 24.04</td><td>Case management</td><td>192.168.106.131</td></tr>
+<tr><td>Kali Linux</td><td>Kali Linux</td><td>Attack simulation</td><td>192.168.106.133</td></tr>
+</tbody>
+</table>
 
 ![VMware Lab Overview](screenshots/vmware-lab-overview.png)
 
@@ -91,13 +97,16 @@ Complete pipeline. LLM analysis is supplemented by real-time threat intelligence
 
 Five simulated attack scenarios mapped to MITRE ATT&CK techniques:
 
-| Scenario | MITRE Technique | Detection Source |
-|---|---|---|
-| Brute Force Authentication | T1110 | Windows Event ID 4625 |
-| Malicious File Execution / Hash | T1059 / T1204 | Sysmon Event ID 1 |
-| Suspicious IP / Network Scanning | T1046 | Windows Firewall logs |
-| Privilege Escalation / Admin Account | T1136 / T1078 | Windows Event ID 4720 / 4732 |
-| PowerShell-Based Attack | T1059.001 | Sysmon command-line telemetry |
+<table width="100%">
+<thead><tr><th>Scenario</th><th>MITRE Technique</th><th>Detection Source</th></tr></thead>
+<tbody>
+<tr><td>Brute Force Authentication</td><td>T1110</td><td>Windows Event ID 4625</td></tr>
+<tr><td>Malicious File Execution / Hash</td><td>T1059 / T1204</td><td>Sysmon Event ID 1</td></tr>
+<tr><td>Suspicious IP / Network Scanning</td><td>T1046</td><td>Windows Firewall logs</td></tr>
+<tr><td>Privilege Escalation / Admin Account</td><td>T1136 / T1078</td><td>Windows Event ID 4720 / 4732</td></tr>
+<tr><td>PowerShell-Based Attack</td><td>T1059.001</td><td>Sysmon command-line telemetry</td></tr>
+</tbody>
+</table>
 
 ### Splunk Detection Rules
 
@@ -132,15 +141,18 @@ GPT-4.1 Mini is capable of strong reasoning, but it can only work with the data 
 
 This project is an **academic proof-of-concept** in a controlled laboratory environment. Real-world deployment would require addressing:
 
-| Limitation | Detail |
-|---|---|
-| **Cost** | OpenAI API and Splunk Enterprise are commercial. See alternatives below. |
-| **Test scale** | 15 runs across 5 scenarios — sufficient for comparative evaluation, not production validation |
-| **Simulated attacks** | All attacks generated on a local VMware network, not real-world traffic |
-| **Manual timing** | Stage timestamps recorded manually with stopwatch application |
-| **API dependency** | AbuseIPDB and VirusTotal rate limits and availability not stress-tested |
-| **Single researcher** | Qualitative scoring applied by one person; structured rubric used to reduce subjectivity |
-| **LLM non-determinism** | GPT-4.1 Mini outputs are probabilistic — identical inputs can produce varied outputs |
+<table width="100%">
+<thead><tr><th>Limitation</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost</strong></td><td>OpenAI API and Splunk Enterprise are commercial. See alternatives below.</td></tr>
+<tr><td><strong>Test scale</strong></td><td>15 runs across 5 scenarios — sufficient for comparative evaluation, not production validation</td></tr>
+<tr><td><strong>Simulated attacks</strong></td><td>All attacks generated on a local VMware network, not real-world traffic</td></tr>
+<tr><td><strong>Manual timing</strong></td><td>Stage timestamps recorded manually with stopwatch application</td></tr>
+<tr><td><strong>API dependency</strong></td><td>AbuseIPDB and VirusTotal rate limits and availability not stress-tested</td></tr>
+<tr><td><strong>Single researcher</strong></td><td>Qualitative scoring applied by one person; structured rubric used to reduce subjectivity</td></tr>
+<tr><td><strong>LLM non-determinism</strong></td><td>GPT-4.1 Mini outputs are probabilistic — identical inputs can produce varied outputs</td></tr>
+</tbody>
+</table>
 
 ---
 
@@ -150,32 +162,41 @@ This pipeline uses commercial tools. If you want to replicate it without cost, h
 
 ### SIEM Alternatives to Splunk
 
-| Tool | Type | Strengths | Limitations |
-|---|---|---|---|
-| **Wazuh** | Open-source | Purpose-built for security, free, good community support | Smaller ecosystem, fewer out-of-box integrations |
-| **ELK Stack** (Elastic) | Open-source | Flexible, highly customisable, cost-effective | Requires significant expertise to configure and maintain |
-| **Security Onion** | Open-source | Comprehensive network monitoring, training-friendly | Resource-heavy, limited scalability, on-premises only |
-| **Microsoft Sentinel** | Cloud (Azure) | Scalable, low maintenance, integrates with Microsoft stack | Requires Azure, costs can escalate with data volume |
+<table width="100%">
+<thead><tr><th>Tool</th><th>Type</th><th>Strengths</th><th>Limitations</th></tr></thead>
+<tbody>
+<tr><td><strong>Wazuh</strong></td><td>Open-source</td><td>Purpose-built for security, free, good community support</td><td>Smaller ecosystem, fewer out-of-box integrations</td></tr>
+<tr><td><strong>ELK Stack</strong> (Elastic)</td><td>Open-source</td><td>Flexible, highly customisable, cost-effective</td><td>Requires significant expertise to configure and maintain</td></tr>
+<tr><td><strong>Security Onion</strong></td><td>Open-source</td><td>Comprehensive network monitoring, training-friendly</td><td>Resource-heavy, limited scalability, on-premises only</td></tr>
+<tr><td><strong>Microsoft Sentinel</strong></td><td>Cloud (Azure)</td><td>Scalable, low maintenance, integrates with Microsoft stack</td><td>Requires Azure, costs can escalate with data volume</td></tr>
+</tbody>
+</table>
 
 ### LLM Alternatives to GPT-4.1 Mini (OpenAI API)
 
-| Model | Type | Cost | Privacy | Notes |
-|---|---|---|---|---|
-| **Ollama + Mistral 7B** | Local / Open-source | Free | High — data stays local | Lightweight, fast, good for constrained environments |
-| **Ollama + LLaMA** | Local / Open-source | Free | High — data stays local | Highly customisable, requires more hardware |
-| **Claude (Anthropic)** | API / Proprietary | Medium–High | Moderate | Strong safety alignment, fewer n8n integration examples |
-| **Google Gemini** | API / Proprietary | Medium | Moderate | Competitive reasoning capability |
+<table width="100%">
+<thead><tr><th>Model</th><th>Type</th><th>Cost</th><th>Privacy</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><strong>Ollama + Mistral 7B</strong></td><td>Local / Open-source</td><td>Free</td><td>High — data stays local</td><td>Lightweight, fast, good for constrained environments</td></tr>
+<tr><td><strong>Ollama + LLaMA</strong></td><td>Local / Open-source</td><td>Free</td><td>High — data stays local</td><td>Highly customisable, requires more hardware</td></tr>
+<tr><td><strong>Claude (Anthropic)</strong></td><td>API / Proprietary</td><td>Medium–High</td><td>Moderate</td><td>Strong safety alignment, fewer n8n integration examples</td></tr>
+<tr><td><strong>Google Gemini</strong></td><td>API / Proprietary</td><td>Medium</td><td>Moderate</td><td>Competitive reasoning capability</td></tr>
+</tbody>
+</table>
 
 **For a fully free, privacy-preserving setup:** replace the OpenAI node in n8n with an Ollama HTTP request node pointing to a locally hosted model. Mistral 7B is a practical starting point — lower accuracy than GPT-4.1 Mini but no API costs and all data stays within your network.
 
 ### SOAR Alternatives to n8n
 
-| Tool | Type | Notes |
-|---|---|---|
-| **Shuffle** | Open-source | Purpose-built for security teams, growing integrations |
-| **Splunk SOAR** | Commercial | Tight Splunk integration but expensive |
-| **Cortex XSOAR** | Commercial | Feature-rich, very high cost |
-| **StackStorm** | Open-source | Powerful but steep learning curve |
+<table width="100%">
+<thead><tr><th>Tool</th><th>Type</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><strong>Shuffle</strong></td><td>Open-source</td><td>Purpose-built for security teams, growing integrations</td></tr>
+<tr><td><strong>Splunk SOAR</strong></td><td>Commercial</td><td>Tight Splunk integration but expensive</td></tr>
+<tr><td><strong>Cortex XSOAR</strong></td><td>Commercial</td><td>Feature-rich, very high cost</td></tr>
+<tr><td><strong>StackStorm</strong></td><td>Open-source</td><td>Powerful but steep learning curve</td></tr>
+</tbody>
+</table>
 
 ---
 
