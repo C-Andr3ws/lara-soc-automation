@@ -220,7 +220,7 @@ lara-soc-automation/
 - Ubuntu 24.04 ISOs × 3, Windows 10 Pro ISO × 1, Kali Linux ISO × 1
 - Splunk Enterprise (trial or developer licence)
 - Docker + Docker Compose (for n8n and DFIR-IRIS)
-- API keys — see `env.example`
+- API keys — see [`env.example`](env.example)
 
 **Required API keys:**
 - OpenAI API key (GPT-4.1 Mini) — or substitute a local Ollama model
