@@ -9,8 +9,6 @@ An end-to-end Security Operations Centre (SOC) automation pipeline that integrat
 
 ## Pipeline Architecture
 
-![Architecture Diagram](screenshots/architecture-diagram.png)
-
 ![Incident Response Workflow](screenshots/incident-response-workflow.png)
 
 ---
@@ -193,7 +191,6 @@ lara-soc-automation/
 ├── results/
 │   └── evaluation-results.csv         ← All 15 test runs raw data
 ├── screenshots/
-│   ├── architecture-diagram.png
 │   ├── incident-response-workflow.png
 │   ├── workflow-canvas.png
 │   ├── slack-notification.png
@@ -203,6 +200,7 @@ lara-soc-automation/
 │   ├── splunk-brute-force-detection.png
 │   ├── splunk-admin-detection.png
 │   ├── sysmon-event-viewer.png
+│   ├── lab-network-topology.png
 │   ├── vmware-lab-overview.png
 │   └── vmware-network-config.png
 └── docs/
