@@ -28,7 +28,11 @@ Three pipeline configurations were tested against five simulated attack scenario
 | **Analyst Steps** | 6.6 avg | 3.0 avg | 3.6 avg |
 | **Classification Accuracy** | 100% | 100% | 100% |
 
+![Pipeline Comparison Radar](screenshots/pipeline-comparison-radar.png)
+
 The central finding: **orchestration depth, not model capability alone, drives performance gains**. The LLM-only configuration improved speed and action quality but failed to improve contextual depth — because that requires external enrichment data, not just better reasoning.
+
+> Full methodology, scoring rubric, per-attack-type breakdown, and interactive dashboard → [`results/`](results/)
 
 ---
 
@@ -79,7 +83,7 @@ Splunk alert is forwarded via webhook to n8n, which passes the structured alert 
 > Pipeline B was not a separate workflow — it was achieved by disabling the AbuseIPDB, VirusTotal, and VirusTotal-FileHash tool nodes in the same n8n workflow used for Pipeline C.
 
 ### Pipeline C — Fully Integrated (Primary)
-Complete pipeline. LLM analysis is supplemented by real-time threat intelligence enrichment via AbuseIPDB (IP reputation) and VirusTotal (file hash and IP detection). Results are used to auto-create a case in DFIR-IRIS and deliver a formatted Slack notification for high-severity alerts.
+Complete pipeline. LLM analysis is supplemented by real-time threat intelligence enrichment via AbuseIPDB (IP reputation) and VirusTotal (file hash and IP detection). Results are used to auto-create a case in DFIR-IRIS and deliver a formatted Slack notification for high and critical severity alerts only.
 
 ---
 
@@ -189,10 +193,13 @@ lara-soc-automation/
 ├── splunk/
 │   └── detection-rules.md             ← All 5 SPL queries with explanation
 ├── results/
-│   └── evaluation-results.csv         ← All 15 test runs raw data
+│   ├── README.md                       ← Methodology, scoring rubric, full findings
+│   ├── evaluation-results.csv         ← All 15 test runs raw data
+│   └── dashboard.html                 ← Interactive analysis dashboard (open locally)
 ├── screenshots/
 │   ├── incident-response-workflow.png
 │   ├── workflow-canvas.png
+│   ├── pipeline-comparison-radar.png
 │   ├── slack-notification.png
 │   ├── dfir-iris-case.png
 │   ├── dfir-iris-cases-list.png
@@ -254,4 +261,3 @@ This project was built for academic research and educational purposes in a fully
 ## Connect
 
 **LinkedIn:** [Christopher Andrews](https://www.linkedin.com/in/christopher-andrews-958b30248/)  
-**Dissertation:** Available on request
