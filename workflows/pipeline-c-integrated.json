@@ -1,0 +1,690 @@
+{
+  "name": "My workflow 8",
+  "nodes": [
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a cybersecurity SOC analysis assistant operating in a tool-enabled SOC automation environment.\n\nYour task:\nAnalyse incoming Splunk alerts and return exactly ONE valid JSON object that strictly matches the required schema.\n\nSTRICT OUTPUT RULES:\n- Output ONLY a single valid JSON object.\n- No text, no explanations, no markdown.\n- Follow the schema EXACTLY.\n- Do not add or remove fields.\n- If data is missing, use null, empty string, empty array, or 0.\n- Never fabricate enrichment results.\n- Never guess threat intelligence.\n- Do not output tool responses directly.\n\n=====================================================================\nTOOL USAGE RULES (MANDATORY)\n=====================================================================\n\nEnrichment must occur BEFORE final JSON output when required.\n\n-----------------------------------------------------\n1️⃣ ADMIN ACCOUNT CREATION PRIORITY RULE\n-----------------------------------------------------\n\nIf:\n- attack_type contains \"Admin Account Creation\"\nOR\n- mitre_technique contains \"T1136\"\n\nThen:\n- Classify as Persistence and Privilege Escalation.\n- Default severity MUST be \"High\" minimum.\n- likelihood MUST be ≥ 75.\n- impact_score MUST be ≥ 80.\n- Do NOT call VirusTotal.\n- Do NOT call AbuseIPDB.\n- Skip all enrichment.\n- Immediately proceed to structured output.\n\n-----------------------------------------------------\n2️⃣ IP ENRICHMENT LOGIC\n-----------------------------------------------------\n\nIf body.result.src_ip exists:\n\nIf IP is private (RFC1918 ranges):\n- Do NOT call enrichment tools.\n- IOC verdict:\n  \"Internal IP address (RFC1918), no external threat intelligence applicable.\"\n- vt_link = null\n- abuseipdb_link = null\n\nIf IP is public:\n- Call AbuseIPDB-Enrichment (mandatory).\n- Call VirusTotal-Enrichment only if enabled.\n- Wait for tool responses before final output.\n- Use results to adjust likelihood and IOC verdict.\n\nIOC links:\nabuseipdb_link: https://www.abuseipdb.com/check/<IP>\nvt_link: https://www.virustotal.com/gui/ip-address/<IP>\n\n-----------------------------------------------------\n3️⃣ FILE HASH ENRICHMENT LOGIC\n-----------------------------------------------------\n\nIf body.result.sha256 exists:\n\n- Call VirusTotal-FileHash-Enrichment\n- Tool input format EXACTLY:\n  {\"sha256\": \"<SHA256 value>\"}\n\nWait for tool response before final output.\n\nUse:\ndata.attributes.last_analysis_stats.malicious\ndata.attributes.last_analysis_stats.suspicious\ndata.attributes.last_analysis_stats.harmless\ndata.attributes.last_analysis_stats.undetected\n\nVerdict rules:\n- malicious > 0 → \"Malicious file detected by VirusTotal engines.\"\n- suspicious > 0 and malicious = 0 → \"Suspicious file flagged by some engines.\"\n- malicious = 0 and suspicious = 0 → \"No malicious detections on VirusTotal.\"\n- No VT data → \"No VirusTotal data available; requires manual review.\"\n\nvt_link:\nhttps://www.virustotal.com/gui/file/<SHA256>\n\nabuseipdb_link must be null for file hashes.\n\n=====================================================================\nRISK SCORING LOGIC (MANDATORY)\n=====================================================================\n\nOutput:\n- impact_score (0–100)\n- likelihood (0–100)\n- risk_score = round((impact_score + likelihood) / 2)\n\nSeverity mapping:\n\nrisk < 40 → \"Low\"\n40 ≤ risk < 70 → \"Medium\"\n70 ≤ risk < 90 → \"High\"\nrisk ≥ 90 → \"Critical\"\n\nBe conservative.\n\nNever assign High or Critical to:\n- Single internal brute-force attempts\n- Obvious benign testing\n- Policy violations without compromise evidence\n\n=====================================================================\nIMPACT SCALE\n=====================================================================\n\n0–30: Minimal impact (test systems, internal IP, non-privileged users)\n31–60: Workstations, normal users\n61–80: Servers, privileged accounts\n81–100: Domain admin, production, sensitive data\n\n=====================================================================\nLIKELIHOOD SCALE\n=====================================================================\n\n0–30: Likely benign\n31–60: Possibly malicious\n61–80: Likely malicious pattern\n81–100: Strong evidence of compromise\n\n=====================================================================\nTIME HANDLING RULE\n=====================================================================\n\n- raw_time MUST equal Raw_Splunk_time exactly.\n- Do NOT modify format.\n- Do NOT convert.\n- Do NOT invent timestamps.\n- Only use Raw_Splunk_time.\n\n=====================================================================\nIOC RULES (MANDATORY)\n=====================================================================\n\n- Always include an IOC for the host (type: \"host\").\n\n- If target_account exists:\n  Add an IOC:\n  type: \"user\"\n  value: target_account\n  verdict: \"Account that was created or modified with administrative privileges.\"\n  vt_link: null\n  abuseipdb_link: null\n\n- If initiating_user exists AND initiating_user is different from target_account:\n  Add an additional IOC:\n  type: \"user\"\n  value: initiating_user\n  verdict: \"Account that performed the administrative change.\"\n  vt_link: null\n  abuseipdb_link: null\n\n=====================================================================\nMITRE MAPPING RULES\n=====================================================================\n\n- Include 0–2 best mappings.\n- If unclear → use empty array [].\n- Each mapping must include:\n  tactic\n  technique_id\n  technique_name\n\n=====================================================================\nSCHEMA (DO NOT CHANGE)\n=====================================================================\n\n{\n  \"alert_type\": \"\",\n  \"title\": \"\",\n  \"severity\": \"\",\n  \"raw_time\": \"\",\n  \"risk_score\": 0,\n  \"likelihood\": 0,\n  \"impact_score\": 0,\n  \"summary\": \"\",\n\n  \"mitre_attack\": [\n    {\n      \"tactic\": \"\",\n      \"technique_id\": \"\",\n      \"technique_name\": \"\"\n    }\n  ],\n\n  \"iocs\": [\n    {\n      \"type\": \"\",\n      \"value\": \"\",\n      \"verdict\": \"\",\n      \"vt_link\": null,\n      \"abuseipdb_link\": null\n    }\n  ],\n\n  \"recommended_actions\": [\n    \"\"\n  ],\n\n  \"links\": {\n    \"splunk\": null,\n    \"ticket\": null\n  }\n}"
+            },
+            {
+              "role": "system",
+              "content": "Analyse the incoming Splunk alert, classify the alert_type, determine severity, risk_score, and likelihood. \nGenerate a concise summary (2–4 sentences).\n\nFor each IOC you find:\n- Determine its type (ip/hash/url/user/host)\n- Fill in verdict based on enrichment data provided\n- If VirusTotal data is available, generate the correct vt_link\n- If AbuseIPDB data is available, generate the correct abuseipdb_link\n\nIOC verdict rules:\n- Always fill \"verdict\" with a short, meaningful phrase (never leave it empty).\n- For private/internal IPs (10.x, 172.16–31.x, 192.168.x): use wording like\n  \"Internal IP, no external threat intel.\"\n- For IPs with AbuseIPDB/VT hits: summarise severity, e.g.\n  \"Malicious IP – high abuse score on AbuseIPDB\" or\n  \"Suspicious IP – some VT detections.\"\n- For host IOCs: describe role + context, e.g.\n  \"Normal workstation targeted by brute force attempt.\"\n- For user IOCs: describe privilege + context, e.g.\n  \"Non-privileged local user involved in failed login.\"\n- If there is truly no info: use\n  \"No threat intelligence available; requires manual review.\"\n\n\nDo not include any commentary outside the JSON schema.\n"
+            },
+            {
+              "content": "=Alert: {{ $json.body.search_name }}\n\nAlert Detail: {{ JSON.stringify($json.body.result, null, 2) }}\n\nRaw_Splunk_time: {{$json.body.result._time}}\n\nSource IP: {{$json.body.result.src_ip}}\nDestination IP: {{$json.body.result.dst_ip}}\nDropped Attempts: {{$json.body.result.drops}}\nTargeted Ports: {{$json.body.result.ports}}\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        -16
+      ],
+      "id": "28213133-d362-40ce-a42b-3dbcdcf545a6",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "iioZZ03CHiZOtPA1",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09U94W3885",
+          "mode": "list",
+          "cachedResultName": "alerts"
+        },
+        "text": "={{$node[\"Code in JavaScript\"].json.slackMessage.replace(\n  \"IRIS Case: (see below)\",\n  `IRIS Case: <https://192.168.106.131/case?cid=${$node[\"DFIR-IRIS HTTP Request1\"].json.data.case_id}|Open Case>`\n)}}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1008,
+        -16
+      ],
+      "id": "a13eb54c-4ecb-4a31-a5c5-f0c22cadf6c8",
+      "name": "Send a message",
+      "webhookId": "ea4de1b7-1758-480e-9a1f-5d4c62cfd45c",
+      "credentials": {
+        "slackApi": {
+          "id": "yFRayqSUYVHzb5s1",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.abuseipdb.com/api/v2/check",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ipAddress",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "maxAgeInDays",
+              "value": "1"
+            },
+            {
+              "name": "verbose"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "d2eb0be73a744848b82fb70cb5a4e6e38a87bca25731a9061be6869ce64eac5815c522e326cad975"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        -96,
+        240
+      ],
+      "id": "b797ea2a-66e2-44f4-b0fd-d72190cc44f1",
+      "name": "AbuseIPDB-Enrichment"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ============================================================\n// n8n JavaScript node — Slack formatting + DFIR-IRIS payloads\n// Tagging refined for ALL alerts (det-*, sev-*, tactic-*, mitre-*, source-*, automation-*)\n// ============================================================\n\n// -----------------------------\n// 0) CONFIG\n// -----------------------------\nconst IRIS_CUSTOMER_ID = 1;\nconst IRIS_ALERT_SOURCE = \"Splunk+n8n\";\nconst IRIS_DEFAULT_CLASSIFICATION_ID = 36; // your other:other\n\n// Risk -> IRIS severity IDs (adjust if your IRIS differs)\nconst IRIS_ALERT_SEVERITY = {\n  Low: 2,\n  Medium: 4,\n  High: 5,\n  Critical: 6,\n};\n\n// ✅ Use YOUR classification IDs\nconst CLASS_IDS = {\n  OTHER: 36,\n  PORT_SCAN: 11,\n  RDP_BRUTEFORCE: 15,\n  ADMIN_ACCOUNT: 17,\n  POWERSHELL: 21,\n  FILE_HASH: 7,\n};\n\n// -----------------------------\n// Helper functions\n// -----------------------------\nfunction slugify(s) {\n  return String(s || \"\")\n    .trim()\n    .toLowerCase()\n    .replace(/['\"]/g, \"\")\n    .replace(/[^a-z0-9]+/g, \"-\")\n    .replace(/^-+|-+$/g, \"\");\n}\n\nfunction uniqAdd(set, v) {\n  if (!v) return;\n  const t = String(v).trim();\n  if (t) set.add(t);\n}\n\n// Detect a stable \"detection tag\" across all alert types using TITLE/ALERT_TYPE text\nfunction detectDetTag(titleKey, typeKey) {\n  const t = `${titleKey} ${typeKey}`;\n\n  if (t.includes(\"port\") && t.includes(\"scan\")) return \"det-port-scan\";\n  if (t.includes(\"rdp\") && (t.includes(\"brute\") || t.includes(\"force\") || t.includes(\"login\"))) return \"det-rdp-bruteforce\";\n  if ((t.includes(\"admin\") && t.includes(\"account\")) || t.includes(\"account creation\") || t.includes(\"create account\")) return \"det-admin-account-creation\";\n  if (t.includes(\"powershell\")) return \"det-suspicious-powershell\";\n  if (t.includes(\"hash\") || t.includes(\"sha\") || (t.includes(\"file\") && t.includes(\"malware\"))) return \"det-file-hash\";\n  return \"det-other\";\n}\n\n// Map det-tag -> IRIS classification id\nfunction classificationFromDet(detTag) {\n  switch (detTag) {\n    case \"det-port-scan\": return CLASS_IDS.PORT_SCAN;\n    case \"det-rdp-bruteforce\": return CLASS_IDS.RDP_BRUTEFORCE;\n    case \"det-admin-account-creation\": return CLASS_IDS.ADMIN_ACCOUNT;\n    case \"det-suspicious-powershell\": return CLASS_IDS.POWERSHELL;\n    case \"det-file-hash\": return CLASS_IDS.FILE_HASH;\n    default: return CLASS_IDS.OTHER;\n  }\n}\n\n// -----------------------------\n// 1) Parse AI JSON from GPT node\n// -----------------------------\nlet raw = \"{}\";\n\nif (\n  $json.output &&\n  Array.isArray($json.output) &&\n  $json.output[0] &&\n  Array.isArray($json.output[0].content) &&\n  $json.output[0].content[0] &&\n  $json.output[0].content[0].text\n) {\n  raw = $json.output[0].content[0].text;\n}\n\nlet data;\ntry {\n  data = JSON.parse(raw);\n} catch (e) {\n  data = {};\n}\n\n// -----------------------------\n// 2) Convert raw_time safely\n// -----------------------------\nlet alertTime = \"Unknown\";\nlet sourceEventTime = null;\n\n// Try AI raw_time first\nif (data.raw_time !== undefined && data.raw_time !== null && data.raw_time !== \"\") {\n  const rawTimeStr = String(data.raw_time).trim();\n\n  // Ignore fake/null strings\n  if (rawTimeStr.toLowerCase() !== \"null\" && rawTimeStr.toLowerCase() !== \"undefined\") {\n    const ts = parseFloat(rawTimeStr);\n\n    if (!Number.isNaN(ts) && Number.isFinite(ts)) {\n      const d = new Date(ts * 1000);\n      if (!Number.isNaN(d.getTime())) {\n        sourceEventTime = d.toISOString();\n      }\n    } else {\n      const parsedDate = new Date(rawTimeStr);\n      if (!Number.isNaN(parsedDate.getTime())) {\n        sourceEventTime = parsedDate.toISOString();\n      }\n    }\n  }\n}\n\n// Fallback: try Splunk event time\nif (!sourceEventTime) {\n  const splunkTime =\n    $json.body?.result?._time ||\n    $json.body?.result?.time ||\n    $json.body?._time ||\n    null;\n\n  if (splunkTime) {\n    const splunkTimeStr = String(splunkTime).trim();\n    const ts = parseFloat(splunkTimeStr);\n\n    if (!Number.isNaN(ts) && Number.isFinite(ts)) {\n      const d = new Date(ts * 1000);\n      if (!Number.isNaN(d.getTime())) {\n        sourceEventTime = d.toISOString();\n      }\n    } else {\n      const parsedDate = new Date(splunkTimeStr);\n      if (!Number.isNaN(parsedDate.getTime())) {\n        sourceEventTime = parsedDate.toISOString();\n      }\n    }\n  }\n}\n\n// Final fallback: current time\nif (!sourceEventTime) {\n  sourceEventTime = new Date().toISOString();\n}\n\n// Display version for Slack\nconst displayDate = new Date(sourceEventTime);\nif (!Number.isNaN(displayDate.getTime())) {\n  alertTime = displayDate.toLocaleString(\"en-GB\", {\n    dateStyle: \"medium\",\n    timeStyle: \"short\",\n    timeZone: \"Europe/London\",\n  });\n}\n\n\n// -----------------------------\n// 3) Risk level\n// -----------------------------\nconst impact10 = Math.round(((data.impact_score ?? data.risk_score) || 0) / 10);\nconst like10   = Math.round((data.likelihood || 0) / 10);\n\nlet riskIndex = Math.round((impact10 + like10) / 2);\nif (!Number.isFinite(riskIndex)) riskIndex = 0;\nriskIndex = Math.max(0, Math.min(10, riskIndex));\n\nlet riskLevel = \"Low\";\nif (riskIndex >= 4) riskLevel = \"Medium\";\nif (riskIndex >= 7) riskLevel = \"High\";\nif (riskIndex >= 9) riskLevel = \"Critical\";\n\n// -----------------------------\n// 4) Slack emoji + channel\n// -----------------------------\nlet emoji = \"⚪\";\nif (riskLevel === \"Low\") emoji = \"🟢\";\nif (riskLevel === \"Medium\") emoji = \"🟡\";\nif (riskLevel === \"High\") emoji = \"🟠\";\nif (riskLevel === \"Critical\") emoji = \"🔴\";\n\nlet detailsChannel = \"#soc-low\";\nif (riskLevel === \"Medium\") detailsChannel = \"#soc-med\";\nif (riskLevel === \"High\") detailsChannel = \"#soc-high\";\nif (riskLevel === \"Critical\") detailsChannel = \"#soc-critical\";\n\n// -----------------------------\n// 5) IOC table + best IOC\n// -----------------------------\nlet iocTable = \"```Type    Value                         Verdict\\n\";\niocTable += \"-------------------------------------------------------------------------------\\n\";\n\nconst iocs = Array.isArray(data.iocs) ? data.iocs : [];\n\nconst bestIoc =\n  iocs.find(i => i.type === \"ip\")?.value ||\n  iocs.find(i => i.type === \"host\")?.value ||\n  iocs.find(i => i.type === \"user\")?.value ||\n  iocs.find(i => String(i.type || \"\").toLowerCase().includes(\"hash\"))?.value ||\n  \"No IOC\";\n\nfor (const ioc of iocs) {\n  const vt = ioc.vt_link ? `<${ioc.vt_link}|VT>` : \"-\";\n  const ab = ioc.abuseipdb_link ? `<${ioc.abuseipdb_link}|AIPDB>` : \"-\";\n  iocTable += `${(ioc.type || \"\").padEnd(7)} ${(ioc.value || \"\").padEnd(30)} ${(ioc.verdict || \"\").padEnd(12)} ${vt}/${ab}\\n`;\n}\niocTable += \"```\";\n\n// -----------------------------\n// 6) Recommended actions\n// -----------------------------\nlet actions = \"\";\nfor (const a of (data.recommended_actions || [])) {\n  actions += `• ${a}\\n`;\n}\n\n// -----------------------------\n// 7) Splunk link\n// -----------------------------\nconst host = $json.body?.result?.host || $json.body?.result?.computer || \"\";\nconst sourcetype =\n  $json.body?.result?.sourcetype ||\n  $json.sourcetype ||\n  \"XmlWinEventLog\";\n\nlet splunkQuery = `search index=*`;\nif (host) splunkQuery += ` host=\"${host}\"`;\nif (sourcetype) splunkQuery += ` sourcetype=\"${sourcetype}\"`;\n\nconst splunkLink =\n  `http://192.168.106.129:8000/en-US/app/search/search?q=${encodeURIComponent(splunkQuery)}&earliest=-24h&latest=now`;\n\n// -----------------------------\n// 8) Slack message\n// -----------------------------\nlet fullMessage = `\n*${emoji} ${data.title || \"SOC Alert\"}*\n\n*Type:* \\`${data.alert_type || \"\"}\\`\n*Severity:* \\`[ ${riskLevel.toUpperCase()} ]\\`\n*Time Detected:* ${alertTime}\n\n*Summary*\n${\"```\"}${data.summary || \"\"}${\"```\"}\n\n*Indicators*\n${iocTable}\n\n*Recommended Actions*\n${actions}\n\n*Links*\n• Splunk: ${splunkLink ? `<${splunkLink}|Open>` : \"N/A\"} | IRIS Case: (see below)\n\n`;\n\nlet summaryMessage = `${emoji} *${data.title || \"SOC Alert\"}* — ${data.alert_type || \"\"} | Severity: ${riskLevel}`;\n\n// ============================================================\n// 9) TAGGING (REFINED)\n// ============================================================\n\nconst rawTitle = String(data.title || \"\");\nconst rawType  = String(data.alert_type || \"\");\nconst titleKey = rawTitle.trim().toLowerCase();\nconst typeKey  = rawType.trim().toLowerCase();\n\n// 9.1 detection tag (det-*)\nconst detTag = detectDetTag(titleKey, typeKey);\n\n// 9.2 tactics + mitre tags from AI report\nconst mitre = Array.isArray(data.mitre_attack) ? data.mitre_attack : [];\n\n// 9.3 Build tag set\nconst tagSet = new Set();\n\n// Core “useful” tags\nuniqAdd(tagSet, `sev-${riskLevel.toLowerCase()}`);\nuniqAdd(tagSet, detTag);\n\nuniqAdd(tagSet, \"source-splunk\");\nuniqAdd(tagSet, \"automation-ai\");\nuniqAdd(tagSet, \"pipeline-n8n\");\n\n// Tactic + MITRE technique tags\nfor (const m of mitre) {\n  if (m?.tactic) uniqAdd(tagSet, `tactic-${slugify(m.tactic)}`);\n  if (m?.technique_id) uniqAdd(tagSet, `mitre-${String(m.technique_id).toUpperCase()}`);\n}\n\n// Fallback theme tag\nif (mitre.length === 0 && rawType) {\n  uniqAdd(tagSet, `theme-${slugify(rawType)}`);\n}\n\n// IOC-type tags\nfor (const ioc of iocs) {\n  if (!ioc?.type) continue;\n  uniqAdd(tagSet, `ioc-${slugify(ioc.type)}`);\n}\n\nconst irisTags = Array.from(tagSet).join(\",\");\n\n// ============================================================\n// 10) CLASSIFICATION (based on detection tag)\n// ============================================================\n\nlet classificationId = Number.isInteger(data.iris_classification_id)\n  ? data.iris_classification_id\n  : classificationFromDet(detTag);\n\nif (!Number.isInteger(classificationId)) classificationId = IRIS_DEFAULT_CLASSIFICATION_ID;\n\n// ============================================================\n// 11) Severity + status\n// ============================================================\n\nconst alertSeverityId = IRIS_ALERT_SEVERITY[riskLevel] ?? IRIS_ALERT_SEVERITY.Medium;\nconst alertStatusId = 1; // required by /alerts/add\n\n// -----------------------------\n// 12) IRIS alert body (/alerts/add)\n// -----------------------------\nconst irisAlertBody = {\n  alert_title: `[${riskLevel}] ${rawType || \"SOC Alert\"} - ${bestIoc}`,\n  alert_description: data.summary || (data.title || \"SOC Alert\"),\n  alert_source: IRIS_ALERT_SOURCE,\n\n  alert_source_ref: $json.body?.sid || data.links?.ticket || `splunk:${host || \"unknown-host\"}`,\n  alert_source_link: splunkLink,\n\n  alert_customer_id: IRIS_CUSTOMER_ID,\n  alert_severity_id: alertSeverityId,\n  alert_status_id: alertStatusId,\n  alert_classification_id: classificationId,\n  alert_tags: irisTags,\n\n  alert_source_event_time: sourceEventTime,\n\n  alert_note: fullMessage,\n\n  alert_source_content: {\n    splunk: $json.body || null,\n    ai_report: data || null,\n  },\n\n  alert_iocs: [],\n  alert_assets: [],\n};\n\n// -----------------------------\n// 13) Escalation body (/alerts/escalate/{alert_id})\n// -----------------------------\nconst irisEscalateBody = {\n  iocs_import_list: [],\n  assets_import_list: [],\n  note: `Escalated automatically from Splunk+n8n. Best IOC: ${bestIoc}.`,\n  import_as_event: true,\n  case_tags: irisTags,\n};\n\n// -----------------------------\n// 14) Return\n// -----------------------------\nreturn {\n  slackMessage: fullMessage,\n  summaryMessage,\n  detailsChannel,\n\n  irisAlertBody,\n  irisEscalateBody,\n\n  // Debug\n  debug_title: rawTitle,\n  debug_alert_type: rawType,\n  debug_detTag: detTag,\n  debug_classificationId: classificationId,\n  debug_tags: irisTags,\n  debug_raw_time: data.raw_time,\n  debug_sourceEventTime: sourceEventTime,\n\n  riskLevel,\n  alertTime,\n  parsedReport: data,\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "013c71f5-4f1d-4359-8369-0c319c669bf5",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://www.virustotal.com/api/v3/files/' + ($json.sha256 || $json.body?.result?.sha256) }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "virusTotalApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        160,
+        240
+      ],
+      "id": "086f1fc4-922b-423c-ab6d-e5a8c0a6d716",
+      "name": "VirusTotal-FileHash-Enrichment",
+      "credentials": {
+        "virusTotalApi": {
+          "id": "Q0MyFBVj7cL6JJWn",
+          "name": "VirusTotal account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://www.virustotal.com/api/v3/ip_addresses/' + $json.body.result.src_ip }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "virusTotalApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        32,
+        240
+      ],
+      "id": "cb7858aa-67fc-43d6-9fdf-14e687909988",
+      "name": "VirusTotal-Enrichment",
+      "credentials": {
+        "virusTotalApi": {
+          "id": "Q0MyFBVj7cL6JJWn",
+          "name": "VirusTotal account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "2936f6aa-83c6-4db7-b720-df0a01bf14d2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -464,
+        288
+      ],
+      "id": "c3e92786-0957-4942-acf5-519092c3d36b",
+      "name": "IP",
+      "webhookId": "2936f6aa-83c6-4db7-b720-df0a01bf14d2"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "83a9ceba-db6c-4b99-9fc6-74caa10e66b6",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -464,
+        128
+      ],
+      "id": "433716e2-8c88-4c7c-8c9c-f1960261d5b1",
+      "name": "Hash",
+      "webhookId": "83a9ceba-db6c-4b99-9fc6-74caa10e66b6"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "f9e8daa7-af29-4766-b75b-de222f955d55",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -464,
+        -16
+      ],
+      "id": "f7fdc032-ce45-4ac9-b5b7-2072ceaabc44",
+      "name": "Scan",
+      "webhookId": "f9e8daa7-af29-4766-b75b-de222f955d55"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "8aefb1af-c7e5-49ba-85ba-8dbdf1f7a4fe",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -464,
+        -160
+      ],
+      "id": "e2b6fded-164a-463c-818f-76d32c11bea8",
+      "name": "PowerShell",
+      "webhookId": "8aefb1af-c7e5-49ba-85ba-8dbdf1f7a4fe"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "465f9a5a-30da-44ce-a253-99bd882dfb5c",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -464,
+        -304
+      ],
+      "id": "bcdd107b-5a5a-4730-b2cb-c6afad601460",
+      "name": "Admin",
+      "webhookId": "465f9a5a-30da-44ce-a253-99bd882dfb5c"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4bcc54ce-78f5-46e5-b0fc-179ff6bd8dd8",
+              "name": "splunk_link",
+              "value": "={{$json.body.results_link}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -208,
+        -16
+      ],
+      "id": "34544698-c46c-4e88-abe7-42b71f663e86",
+      "name": "Set link"
+    },
+    {
+      "parameters": {
+        "preBuiltAgentsCalloutHttpRequest": "",
+        "httpVariantWarning": "",
+        "curlImport": "",
+        "method": "POST",
+        "": "",
+        "url": "https://192.168.106.131/alerts/add",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "dfirIrisApi",
+        "provideSslCertificates": false,
+        "sendQuery": false,
+        "sendHeaders": false,
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{$json.irisAlertBody}}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        },
+        "infoMessage": ""
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        416,
+        -16
+      ],
+      "id": "e94fa4a9-c37b-4e18-8aeb-7538a15a2015",
+      "name": "DFIR-IRIS HTTP Request",
+      "extendsCredential": "dfirIrisApi",
+      "credentials": {
+        "dfirIrisApi": {
+          "id": "RdKxcP09o3ERGVer",
+          "name": "DFIR-IRIS account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "preBuiltAgentsCalloutHttpRequest": "",
+        "httpVariantWarning": "",
+        "curlImport": "",
+        "method": "POST",
+        "": "",
+        "url": "=https://192.168.106.131/alerts/escalate/{{$node[\"DFIR-IRIS HTTP Request\"].json.data.alert_id}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "dfirIrisApi",
+        "provideSslCertificates": false,
+        "sendQuery": false,
+        "sendHeaders": false,
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{$node[\"Code in JavaScript\"].json.irisEscalateBody}}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        },
+        "infoMessage": ""
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        608,
+        -16
+      ],
+      "id": "23536ec5-a9d3-4423-8634-ee4219931f68",
+      "name": "DFIR-IRIS HTTP Request1",
+      "extendsCredential": "dfirIrisApi",
+      "credentials": {
+        "dfirIrisApi": {
+          "id": "RdKxcP09o3ERGVer",
+          "name": "DFIR-IRIS account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "361a657f-5d59-44e0-bfed-ecbeaa44b1e3",
+              "leftValue": "={{$node[\"Code in JavaScript\"].json.riskLevel}}",
+              "rightValue": "High",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "008e22d3-a28c-4a77-9cff-24bfbc1ee0a6",
+              "leftValue": "={{$node[\"Code in JavaScript\"].json.riskLevel}}",
+              "rightValue": "Critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        -16
+      ],
+      "id": "7cdfbaa1-3481-43c9-beb3-170493b2f963",
+      "name": "If"
+    }
+  ],
+  "pinData": {
+    "IP": [
+      {
+        "json": {
+          "headers": {
+            "accept-encoding": "identity",
+            "content-length": "417",
+            "host": "192.168.106.130:5678",
+            "content-type": "application/json",
+            "user-agent": "Splunk/6161321C-6545-4966-8C9E-C80F4B340CC4",
+            "connection": "close"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "sid": "scheduler__chrisproject__search__RMD5359b0e592893ab52_at_1772314980_2",
+            "search_name": "Brute-Force",
+            "app": "search",
+            "owner": "chrisproject",
+            "results_link": "http://splunk-fresh:8000/app/search/@go?sid=scheduler__chrisproject__search__RMD5359b0e592893ab52_at_1772314980_2",
+            "result": {
+              "_time": "1772314176.786",
+              "ComputerName": "DESKTOP-IKSEGJ5",
+              "user": "chris",
+              "src_ip": "192.168.106.1",
+              "count": "1"
+            }
+          },
+          "webhookUrl": "http://192.168.106.130:5678/webhook-test/70fc3694-0a3c-4d85-9fb9-931d51e7408a",
+          "executionMode": "test"
+        }
+      }
+    ],
+    "Hash": [
+      {
+        "json": {
+          "headers": {
+            "accept-encoding": "identity",
+            "content-length": "623",
+            "host": "192.168.106.130:5678",
+            "content-type": "application/json",
+            "user-agent": "Splunk/6161321C-6545-4966-8C9E-C80F4B340CC4",
+            "connection": "close"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "sid": "scheduler__chrisproject__search__RMD50a7d4d424dd33b0e_at_1772325060_35",
+            "search_name": "Sysmon - SHA256",
+            "app": "search",
+            "owner": "chrisproject",
+            "results_link": "http://splunk-fresh:8000/app/search/@go?sid=scheduler__chrisproject__search__RMD50a7d4d424dd33b0e_at_1772325060_35",
+            "result": {
+              "_time": "1772322913.205",
+              "Computer": "DESKTOP-IKSEGJ5",
+              "Image": "C:\\Program Files\\SplunkUniversalForwarder\\bin\\splunk-powershell.exe",
+              "CommandLine": "\"C:\\Program Files\\SplunkUniversalForwarder\\bin\\splunk-powershell.exe\" --ps2",
+              "sha256": "1FA55805C700D349AAC34B4AB284802442FA4CE9BFFE3A832465E97FD24A709A"
+            }
+          },
+          "webhookUrl": "http://192.168.106.130:5678/webhook-test/bb745e05-9321-4c5f-a8d6-6b75b4349f28",
+          "executionMode": "test"
+        }
+      }
+    ],
+    "PowerShell": [
+      {
+        "json": {
+          "headers": {
+            "accept-encoding": "identity",
+            "content-length": "1106",
+            "host": "192.168.106.130:5678",
+            "content-type": "application/json",
+            "user-agent": "Splunk/6161321C-6545-4966-8C9E-C80F4B340CC4",
+            "connection": "close"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "sid": "scheduler__chrisproject__search__RMD5ad0cec226419171f_at_1772396460_48",
+            "search_name": "Execution - Suspicious PowerShell",
+            "app": "search",
+            "owner": "chrisproject",
+            "results_link": "http://splunk-fresh:8000/app/search/@go?sid=scheduler__chrisproject__search__RMD5ad0cec226419171f_at_1772396460_48",
+            "result": {
+              "Raw_Splunk_time": "1772395984.249",
+              "User": "DESKTOP-IKSEGJ5\\chris",
+              "host": "DESKTOP-IKSEGJ5",
+              "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+              "CommandLine": "\"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" -NoProfile -Command \"Write-Output 'splunk test'; Start-Sleep -Seconds 2\"",
+              "ParentImage": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+              "ParentCommandLine": "\"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\"",
+              "Hashes": "MD5=2E5A8590CF6848968FC23DE3FA1E25F1,SHA256=9785001B0DCF755EDDB8AF294A373C0B87B2498660F724E76C4D53F9C217C7A3,IMPHASH=3D08F4848535206D772DE145804FF4B6",
+              "flags": "NoProfile",
+              "hits": "1",
+              "attack_type": "Suspicious PowerShell Execution",
+              "mitre_technique": "T1059.001"
+            }
+          },
+          "webhookUrl": "http://192.168.106.130:5678/webhook-test/98f01373-2029-401f-99bb-7c5a30c5c1ea",
+          "executionMode": "test"
+        }
+      }
+    ],
+    "Admin": [
+      {
+        "json": {
+          "headers": {
+            "accept-encoding": "identity",
+            "content-length": "711",
+            "host": "192.168.106.130:5678",
+            "content-type": "application/json",
+            "user-agent": "Splunk/6161321C-6545-4966-8C9E-C80F4B340CC4",
+            "connection": "close"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "sid": "scheduler__chrisproject__search__RMD5c222aaacd470a814_at_1772404560_2",
+            "search_name": "Persistence - Admin Account Creation",
+            "app": "search",
+            "owner": "chrisproject",
+            "results_link": "http://splunk-fresh:8000/app/search/@go?sid=scheduler__chrisproject__search__RMD5c222aaacd470a814_at_1772404560_2",
+            "result": {
+              "target_account": "chris",
+              "Raw_Splunk_time": "1772403477.251",
+              "actions": [
+                "Added to Local Administrators Group",
+                "User Account Created"
+              ],
+              "domain": "DESKTOP-IKSEGJ5",
+              "host": "DESKTOP-IKSEGJ5",
+              "initiating_user": "socadmin",
+              "computer": "DESKTOP-IKSEGJ5",
+              "hits": "2",
+              "attack_type": "Admin Account Creation / Privilege Escalation",
+              "mitre_technique": "T1136,T1078",
+              "severity": "HIGH"
+            }
+          },
+          "webhookUrl": "http://192.168.106.130:5678/webhook-test/f7ea26af-0e74-4f64-ad78-51b41fa5cd86",
+          "executionMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AbuseIPDB-Enrichment": {
+      "ai_tool": [
+        [
+          {
+            "node": "Message a model",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "DFIR-IRIS HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VirusTotal-FileHash-Enrichment": {
+      "ai_tool": [
+        [
+          {
+            "node": "Message a model",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VirusTotal-Enrichment": {
+      "ai_tool": [
+        [
+          {
+            "node": "Message a model",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IP": {
+      "main": [
+        []
+      ]
+    },
+    "Hash": {
+      "main": [
+        []
+      ]
+    },
+    "Scan": {
+      "main": [
+        []
+      ]
+    },
+    "PowerShell": {
+      "main": [
+        []
+      ]
+    },
+    "Admin": {
+      "main": [
+        []
+      ]
+    },
+    "Set link": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DFIR-IRIS HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "DFIR-IRIS HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DFIR-IRIS HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "C0cUbpNy5z06pbV9"
+  },
+  "versionId": "9df0bf8c-45f0-451d-8edf-1779f3378e7c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7e29d0208136ed03358b30f9f43d3159cc2b56a15d404d0998d7ec2d0a4b9d76"
+  },
+  "id": "6LDp1jwoArVEmjyJ",
+  "tags": []
+}
