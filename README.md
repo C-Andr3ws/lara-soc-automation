@@ -7,6 +7,14 @@ An end-to-end Security Operations Centre (SOC) automation pipeline that integrat
 
 ---
 
+## Pipeline Architecture
+
+![Architecture Diagram](screenshots/architecture-diagram.png)
+
+![Incident Response Workflow](screenshots/incident-response-workflow.png)
+
+---
+
 ## What makes this different
 
 Most SOC automation lab projects demonstrate that a pipeline *works*. This project goes further by **formally evaluating whether it works better** — and by how much.
@@ -26,29 +34,19 @@ The central finding: **orchestration depth, not model capability alone, drives p
 
 ---
 
-## Pipeline Architecture
+## Pipeline in Action
 
-```
-Windows Endpoint (Sysmon)
-        │
-        ▼
-   Splunk SIEM  ──── SPL Detection Rules
-        │
-        │ Webhook (JSON alert payload)
-        ▼
-     n8n SOAR  ──── Orchestration Layer
-        │
-        ├──► GPT-4.1 Mini (Initial Analysis)
-        │         │
-        │         ├──► AbuseIPDB (IP Reputation)
-        │         └──► VirusTotal (File Hash / IP)
-        │         │
-        │         └──► GPT-4.1 Mini (Final Verdict)
-        │
-        ├──► DFIR-IRIS (Automated Case Creation) ← all alerts
-        │
-        └──► Slack (Analyst Notification) ← High/Critical only
-```
+### n8n Workflow Canvas
+![n8n Workflow Canvas](screenshots/workflow-canvas.png)
+
+### Slack Alert — Critical Severity
+![Slack Notification](screenshots/slack-notification.png)
+
+### DFIR-IRIS — Auto-Created Case
+![DFIR-IRIS Case](screenshots/dfir-iris-case.png)
+
+### DFIR-IRIS — Alert Queue
+![DFIR-IRIS Cases List](screenshots/dfir-iris-cases-list.png)
 
 ---
 
@@ -63,6 +61,10 @@ Deployed across **5 Virtual Machines** in VMware Workstation Pro on an isolated 
 | n8n Server | Ubuntu 24.04 | SOAR & LLM orchestration | 192.168.106.130 |
 | DFIR-IRIS Server | Ubuntu 24.04 | Case management | 192.168.106.131 |
 | Kali Linux | Kali Linux | Attack simulation | 192.168.106.133 |
+
+![VMware Lab Overview](screenshots/vmware-lab-overview.png)
+
+![VMware Network Config](screenshots/vmware-network-config.png)
 
 All attack traffic was generated within this isolated network. No real-world attack traffic was used at any point.
 
@@ -94,6 +96,18 @@ Five simulated attack scenarios mapped to MITRE ATT&CK techniques:
 | Suspicious IP / Network Scanning | T1046 | Windows Firewall logs |
 | Privilege Escalation / Admin Account | T1136 / T1078 | Windows Event ID 4720 / 4732 |
 | PowerShell-Based Attack | T1059.001 | Sysmon command-line telemetry |
+
+### Splunk Detection Rules
+
+![Splunk Alerts List](screenshots/splunk-alerts.png)
+
+![Splunk Brute Force Detection](screenshots/splunk-brute-force-detection.png)
+
+![Splunk Admin Account Detection](screenshots/splunk-admin-detection.png)
+
+### Endpoint Telemetry — Sysmon
+
+![Sysmon Event Viewer](screenshots/sysmon-event-viewer.png)
 
 All scenarios were pre-verified to ensure correct detection before formal timing tests began. The 100% classification accuracy result reflects performance under controlled conditions against known, tested scenarios — not a claim of generalised real-world reliability.
 
@@ -171,7 +185,7 @@ lara-soc-automation/
 ├── LICENSE
 ├── env.example                         ← API key template
 ├── workflows/
-│   └── pipeline-c-integrated.json     ← n8n workflow export (fully integrated)
+│   └── pipeline-c.json                ← n8n workflow export (fully integrated)
 │                                          Pipeline B = disable AbuseIPDB + VirusTotal nodes
 │                                          Pipeline A = manual baseline, no automation
 ├── splunk/
@@ -179,14 +193,22 @@ lara-soc-automation/
 ├── results/
 │   └── evaluation-results.csv         ← All 15 test runs raw data
 ├── screenshots/
-│   ├── workflow-canvas.png             ← n8n workflow overview
-│   ├── splunk-alerts.png               ← Splunk saved alerts list
-│   ├── dfir-iris-case.png              ← Auto-created DFIR-IRIS case
-│   └── slack-notification.png         ← Slack alert output
+│   ├── architecture-diagram.png
+│   ├── incident-response-workflow.png
+│   ├── workflow-canvas.png
+│   ├── slack-notification.png
+│   ├── dfir-iris-case.png
+│   ├── dfir-iris-cases-list.png
+│   ├── splunk-alerts.png
+│   ├── splunk-brute-force-detection.png
+│   ├── splunk-admin-detection.png
+│   ├── sysmon-event-viewer.png
+│   ├── vmware-lab-overview.png
+│   └── vmware-network-config.png
 └── docs/
-    ├── attack-scenarios.md             ← MITRE-mapped scenario descriptions
-    ├── lab-environment.md              ← Full VM setup and network config
-    └── prompts-and-code.md            ← Full system prompt, user prompt, and JavaScript
+    ├── attack-scenarios.md
+    ├── lab-environment.md
+    └── prompts-and-code.md
 ```
 
 ---
@@ -234,3 +256,4 @@ This project was built for academic research and educational purposes in a fully
 ## Connect
 
 **LinkedIn:** [Christopher Andrews](https://www.linkedin.com/in/christopher-andrews-958b30248/)  
+**Dissertation:** Available on request
