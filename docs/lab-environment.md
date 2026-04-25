@@ -18,6 +18,8 @@ This document covers the environment setup and network configuration. For full s
 | DFIR-IRIS Server | Ubuntu 24.04 LTS | Case management | 192.168.106.131 | 4GB | 40GB |
 | Kali Linux | Kali Linux (rolling) | Attack simulation | 192.168.106.133 | 2GB | 40GB |
 
+![Lab Network Topology](../screenshots/lab-network-topology.png)
+
 ---
 
 ## Network Configuration
